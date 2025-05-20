@@ -3,12 +3,12 @@ import Head from 'next/head';
 import styles from '../styles/Home.module.css';
 import PaintApp from '../components/PaintApp';
 import NotesApp from '../components/NotesApp';
+import { database } from '../firebase';
+import { ref, onValue, set, update, remove, get } from "firebase/database";
 
 export default function Home() {
   // State for tracking active windows
-  const [windows, setWindows] = useState([
-    // Initial windows can be empty - we'll create them dynamically
-  ]);
+  const [windows, setWindows] = useState([]);
   const [windowCount, setWindowCount] = useState(0);
   const [minimizedWindows, setMinimizedWindows] = useState([]);
   
@@ -22,12 +22,95 @@ export default function Home() {
   
   // Desktop icons configuration with built-in SVG fallbacks
   const desktopIcons = [ { id: 'mspaint', name: 'MS Paint', icon: '/icons/mspaint.png' }, { id: 'notes', name: 'Notes', icon: '/icons/notes.png' }, ];
+  // Load desktop color from Firebase
+  useEffect(() => {
+    const desktopColorRef = ref(database, 'settings/desktopColor');
+    
+    const unsubscribe = onValue(desktopColorRef, (snapshot) => {
+      const color = snapshot.val();
+      if (color) {
+        setDesktopColor(color);
+        setPreviewColor(color);
+      }
+    });
+    
+    return () => unsubscribe();
+  }, []);
+  
+  // Load windows from Firebase
+  useEffect(() => {
+    const windowsRef = ref(database, 'windows');
+    
+    const unsubscribe = onValue(windowsRef, (snapshot) => {
+      const windowsData = snapshot.val();
+      if (windowsData) {
+        // Convert from object to array if needed
+        const windowsArray = Array.isArray(windowsData) 
+          ? windowsData 
+          : Object.values(windowsData);
+        
+        setWindows(windowsArray);
+      }
+    });
+    
+    return () => unsubscribe();
+  }, []);
+  
+  // Load minimized windows from Firebase
+  useEffect(() => {
+    const minimizedRef = ref(database, 'minimizedWindows');
+    
+    const unsubscribe = onValue(minimizedRef, (snapshot) => {
+      const minimizedData = snapshot.val();
+      if (minimizedData) {
+        // Convert from object to array if needed
+        const minimizedArray = Array.isArray(minimizedData) 
+          ? minimizedData 
+          : Object.values(minimizedData);
+        
+        setMinimizedWindows(minimizedArray);
+      }
+    });
+    
+    return () => unsubscribe();
+  }, []);
+  
+  // Load window count from Firebase
+  useEffect(() => {
+    const countRef = ref(database, 'windowCount');
+    
+    const unsubscribe = onValue(countRef, (snapshot) => {
+      const count = snapshot.val();
+      if (count !== null && count !== undefined) {
+        setWindowCount(count);
+      }
+    });
+    
+    return () => unsubscribe();
+  }, []);
+  
+  // Load active window ID from Firebase
+  useEffect(() => {
+    const activeWindowRef = ref(database, 'activeWindowId');
+    
+    const unsubscribe = onValue(activeWindowRef, (snapshot) => {
+      const activeId = snapshot.val();
+      if (activeId) {
+        setActiveWindowId(activeId);
+      }
+    });
+    
+    return () => unsubscribe();
+  }, []);
   
   // Handle window open
   const openWindow = (windowType) => {
     // Create a unique ID for the window
     const uniqueId = `${windowType}-${windowCount}`;
-    setWindowCount(prev => prev + 1);
+    const newCount = windowCount + 1;
+    
+    // Update window count in Firebase
+    set(ref(database, 'windowCount'), newCount);
     
     // Create window config based on type
     let windowConfig = {
@@ -54,22 +137,27 @@ export default function Home() {
       windowConfig.size = { width: 400, height: 300 };
     }
     
-    // Add new window to the state
-    setWindows(prev => [...prev, windowConfig]);
-    setActiveWindowId(uniqueId);
+    // Add new window to Firebase
+    const newWindows = [...windows, windowConfig];
+    set(ref(database, 'windows'), newWindows);
+    
+    // Set as active window
+    set(ref(database, 'activeWindowId'), uniqueId);
   };
   
-  // eslint-disable-next-line no-unused-vars
-const minimizeWindow = (windowId) => {
+  // Handle window minimize
+  const minimizeWindow = (windowId) => {
     // Find the window to minimize
     const windowToMinimize = windows.find(w => w.id === windowId);
     if (!windowToMinimize) return;
     
-    // Add to minimized windows list
-    setMinimizedWindows(prev => [...prev, windowToMinimize]);
+    // Add to minimized windows in Firebase
+    const newMinimized = [...minimizedWindows, windowToMinimize];
+    set(ref(database, 'minimizedWindows'), newMinimized);
     
-    // Remove from active windows
-    setWindows(windows.filter(window => window.id !== windowId));
+    // Remove from active windows in Firebase
+    const newWindows = windows.filter(window => window.id !== windowId);
+    set(ref(database, 'windows'), newWindows);
     
     // Set a new active window if needed
     if (activeWindowId === windowId) {
@@ -78,9 +166,9 @@ const minimizeWindow = (windowId) => {
         const highestZWindow = remainingWindows.reduce((prev, current) => 
           (prev.zIndex > current.zIndex) ? prev : current
         );
-        setActiveWindowId(highestZWindow.id);
+        set(ref(database, 'activeWindowId'), highestZWindow.id);
       } else {
-        setActiveWindowId(null);
+        remove(ref(database, 'activeWindowId'));
       }
     }
   };
@@ -97,14 +185,16 @@ const minimizeWindow = (windowId) => {
       zIndex: Math.max(...windows.map(w => w.zIndex || 0), 0) + 1
     };
     
-    // Add back to active windows
-    setWindows(prev => [...prev, updatedWindow]);
+    // Add back to active windows in Firebase
+    const newWindows = [...windows, updatedWindow];
+    set(ref(database, 'windows'), newWindows);
     
-    // Remove from minimized windows
-    setMinimizedWindows(minimizedWindows.filter(window => window.id !== windowId));
+    // Remove from minimized windows in Firebase
+    const newMinimized = minimizedWindows.filter(window => window.id !== windowId);
+    set(ref(database, 'minimizedWindows'), newMinimized);
     
-    // Set as active window
-    setActiveWindowId(windowId);
+    // Set as active window in Firebase
+    set(ref(database, 'activeWindowId'), windowId);
   };
   
   // Handle window close
@@ -113,32 +203,46 @@ const minimizeWindow = (windowId) => {
     const isMinimized = minimizedWindows.some(w => w.id === windowId);
     
     if (isMinimized) {
-      setMinimizedWindows(minimizedWindows.filter(window => window.id !== windowId));
+      // Remove from minimized windows in Firebase
+      const newMinimized = minimizedWindows.filter(window => window.id !== windowId);
+      set(ref(database, 'minimizedWindows'), newMinimized);
     } else {
-      setWindows(windows.filter(window => window.id !== windowId));
+      // Remove from active windows in Firebase
+      const newWindows = windows.filter(window => window.id !== windowId);
+      set(ref(database, 'windows'), newWindows);
       
       // Set the next highest zIndex window as active
-      const remainingWindows = windows.filter(w => w.id !== windowId);
-      if (remainingWindows.length > 0) {
-        const highestZWindow = remainingWindows.reduce((prev, current) => 
-          (prev.zIndex > current.zIndex) ? prev : current
-        );
-        setActiveWindowId(highestZWindow.id);
-      } else {
-        setActiveWindowId(null);
+      if (activeWindowId === windowId) {
+        const remainingWindows = windows.filter(w => w.id !== windowId);
+        if (remainingWindows.length > 0) {
+          const highestZWindow = remainingWindows.reduce((prev, current) => 
+            (prev.zIndex > current.zIndex) ? prev : current
+          );
+          set(ref(database, 'activeWindowId'), highestZWindow.id);
+        } else {
+          remove(ref(database, 'activeWindowId'));
+        }
       }
     }
   };
   
   // Handle window focus
   const focusWindow = (windowId) => {
-    setWindows(windows.map(window => {
+    // Update z-index in Firebase
+    const updatedWindows = windows.map(window => {
       if (window.id === windowId) {
-        return { ...window, zIndex: Math.max(...windows.map(w => w.zIndex)) + 1 };
+        return { 
+          ...window, 
+          zIndex: Math.max(...windows.map(w => w.zIndex || 0), 0) + 1 
+        };
       }
       return window;
-    }));
-    setActiveWindowId(windowId);
+    });
+    
+    set(ref(database, 'windows'), updatedWindows);
+    
+    // Set as active window in Firebase
+    set(ref(database, 'activeWindowId'), windowId);
   };
   
   // Handle window drag
@@ -163,7 +267,7 @@ const minimizeWindow = (windowId) => {
       const dx = moveEvent.clientX - startX;
       const dy = moveEvent.clientY - startY;
       
-      setWindows(windows.map(w => {
+      const updatedWindows = windows.map(w => {
         if (w.id === windowId) {
           return {
             ...w,
@@ -174,10 +278,32 @@ const minimizeWindow = (windowId) => {
           };
         }
         return w;
-      }));
+      });
+      
+      // Update local state for responsiveness during drag
+      setWindows(updatedWindows);
     };
     
     const handleMouseUp = () => {
+      // When mouse up, save the final position to Firebase
+      const updatedWindows = windows.map(w => {
+        if (w.id === windowId) {
+          const dx = e.clientX - startX;
+          const dy = e.clientY - startY;
+          
+          return {
+            ...w,
+            position: {
+              x: startPosX + dx,
+              y: startPosY + dy
+            }
+          };
+        }
+        return w;
+      });
+      
+      set(ref(database, 'windows'), updatedWindows);
+      
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
     };
@@ -203,7 +329,7 @@ const minimizeWindow = (windowId) => {
       const dx = moveEvent.clientX - startX;
       const dy = moveEvent.clientY - startY;
       
-      setWindows(windows.map(w => {
+      const updatedWindows = windows.map(w => {
         if (w.id === windowId) {
           return {
             ...w,
@@ -214,10 +340,32 @@ const minimizeWindow = (windowId) => {
           };
         }
         return w;
-      }));
+      });
+      
+      // Update local state for responsiveness during resize
+      setWindows(updatedWindows);
     };
     
     const handleMouseUp = () => {
+      // When mouse up, save the final size to Firebase
+      const updatedWindows = windows.map(w => {
+        if (w.id === windowId) {
+          const dx = e.clientX - startX;
+          const dy = e.clientY - startY;
+          
+          return {
+            ...w,
+            size: {
+              width: Math.max(300, startWidth + dx),
+              height: Math.max(200, startHeight + dy)
+            }
+          };
+        }
+        return w;
+      });
+      
+      set(ref(database, 'windows'), updatedWindows);
+      
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
     };
@@ -233,8 +381,8 @@ const minimizeWindow = (windowId) => {
   };
 
   const applyColorChange = () => {
-    // Apply the previewed color to the actual desktop
-    setDesktopColor(previewColor);
+    // Apply the previewed color to Firebase
+    set(ref(database, 'settings/desktopColor'), previewColor);
     setShowColorPicker(false);
   };
 
@@ -271,26 +419,25 @@ const minimizeWindow = (windowId) => {
   
   // Click outside handler for color picker
   useEffect(() => {
-  if (!showColorPicker) return;
+    if (!showColorPicker) return;
+    
+    const handleClickOutside = (event) => {
+      if (
+        event.target.closest(`.${styles.colorPickerPopup}`) === null &&
+        event.target.closest(`.${styles.colorPickerButton}`) === null
+      ) {
+        // Cancel color change when clicking outside (reset to original)
+        cancelColorChange();
+      }
+    };
+    
+    document.addEventListener('mousedown', handleClickOutside);
+    
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showColorPicker, styles.colorPickerPopup, styles.colorPickerButton, desktopColor]);
   
-  const handleClickOutside = (event) => {
-    if (
-      event.target.closest(`.${styles.colorPickerPopup}`) === null &&
-      event.target.closest(`.${styles.colorPickerButton}`) === NULL
-    ) {
-      // Cancel color change when clicking outside (reset to original)
-      setPreviewColor(desktopColor);
-      setShowColorPicker(false);
-    }
-  };
-  
-  document.addEventListener('mousedown', handleClickOutside);
-  
-  return () => {
-    document.removeEventListener('mousedown', handleClickOutside);
-  };
-}, [showColorPicker, styles.colorPickerPopup, styles.colorPickerButton, desktopColor]);
-
   // For double click handling on desktop icons
   const handleIconDoubleClick = (iconId) => {
     openWindow(iconId);

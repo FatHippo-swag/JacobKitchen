@@ -1,10 +1,32 @@
 import { useState, useRef, useEffect } from 'react';
 import styles from '../styles/NotesApp.module.css';
+import { database } from '../firebase';
+import { ref, onValue, set } from "firebase/database";
 
-export default function NotesApp() {
+export default function NotesApp({ windowId }) {
   const [text, setText] = useState('');
   const textareaRef = useRef(null);
   const containerRef = useRef(null);
+  const [isTyping, setIsTyping] = useState(false);
+  const typingTimeoutRef = useRef(null);
+
+  // Load notes content from Firebase
+  useEffect(() => {
+    if (windowId) {
+      const notesRef = ref(database, `notes/${windowId}`);
+      
+      const unsubscribe = onValue(notesRef, (snapshot) => {
+        const data = snapshot.val();
+        
+        // Only update if we're not currently typing to avoid cursor jump
+        if (!isTyping && data !== null) {
+          setText(data);
+        }
+      });
+      
+      return () => unsubscribe();
+    }
+  }, [windowId, isTyping]);
 
   // Resize textarea to fit container
   useEffect(() => {
@@ -38,7 +60,25 @@ export default function NotesApp() {
   }, []);
 
   const handleTextChange = (e) => {
-    setText(e.target.value);
+    const newText = e.target.value;
+    setText(newText);
+    
+    // Set typing status to prevent updates from Firebase while user is typing
+    setIsTyping(true);
+    
+    // Clear any existing timeout
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
+    }
+    
+    // Set a new timeout
+    typingTimeoutRef.current = setTimeout(() => {
+      // When the timeout expires, update Firebase and clear typing status
+      if (windowId) {
+        set(ref(database, `notes/${windowId}`), newText);
+      }
+      setIsTyping(false);
+    }, 500); // Send update after 500ms of no typing
   };
 
   return (
