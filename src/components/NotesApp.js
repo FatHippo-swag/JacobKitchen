@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import styles from '../styles/NotesApp.module.css';
 
-export default function NotesApp({ windowId }) {
+export default function NotesApp() {
   const [text, setText] = useState('');
   const textareaRef = useRef(null);
   const containerRef = useRef(null);

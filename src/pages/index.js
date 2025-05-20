@@ -59,8 +59,8 @@ export default function Home() {
     setActiveWindowId(uniqueId);
   };
   
-  // Handle window minimize
-  const minimizeWindow = (windowId) => {
+  // eslint-disable-next-line no-unused-vars
+const minimizeWindow = (windowId) => {
     // Find the window to minimize
     const windowToMinimize = windows.find(w => w.id === windowId);
     if (!windowToMinimize) return;
@@ -271,25 +271,26 @@ export default function Home() {
   
   // Click outside handler for color picker
   useEffect(() => {
-    if (!showColorPicker) return;
-    
-    const handleClickOutside = (event) => {
-      if (
-        event.target.closest(`.${styles.colorPickerPopup}`) === null &&
-        event.target.closest(`.${styles.colorPickerButton}`) === null
-      ) {
-        // Cancel color change when clicking outside (reset to original)
-        cancelColorChange();
-      }
-    };
-    
-    document.addEventListener('mousedown', handleClickOutside);
-    
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [showColorPicker, styles.colorPickerPopup, styles.colorPickerButton]);
+  if (!showColorPicker) return;
   
+  const handleClickOutside = (event) => {
+    if (
+      event.target.closest(`.${styles.colorPickerPopup}`) === null &&
+      event.target.closest(`.${styles.colorPickerButton}`) === NULL
+    ) {
+      // Cancel color change when clicking outside (reset to original)
+      setPreviewColor(desktopColor);
+      setShowColorPicker(false);
+    }
+  };
+  
+  document.addEventListener('mousedown', handleClickOutside);
+  
+  return () => {
+    document.removeEventListener('mousedown', handleClickOutside);
+  };
+}, [showColorPicker, styles.colorPickerPopup, styles.colorPickerButton, desktopColor]);
+
   // For double click handling on desktop icons
   const handleIconDoubleClick = (iconId) => {
     openWindow(iconId);

@@ -15,6 +15,7 @@ export default function PaintApp({ windowId }) {
   
   // Original canvas size tracking for quality preservation
   const [originalCanvasSize, setOriginalCanvasSize] = useState({ width: 0, height: 0 });
+// eslint-disable-next-line no-unused-vars
   const [originalImageData, setOriginalImageData] = useState(null);
 
   // Save the canvas state for undo functionality
@@ -59,7 +60,8 @@ export default function PaintApp({ windowId }) {
       
       // Remove the latest state from the stack
       const newStack = [...undoStack];
-      const previousCanvas = newStack.pop();
+      // eslint-disable-next-line no-unused-vars
+const previousCanvas = newStack.pop();
       setUndoStack(newStack);
       
       if (newStack.length > 0) {
