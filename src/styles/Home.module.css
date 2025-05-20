@@ -1,0 +1,312 @@
+/* Import MS Sans Serif font for authentic Windows 9x look */
+@import url('https://fonts.cdnfonts.com/css/ms-sans-serif');
+
+/* Desktop container */
+.desktopContainer {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  width: 100vw;
+  margin: 0;
+  padding: 0;
+  font-family: 'MS Sans Serif', sans-serif;
+  color: #000000;
+  overflow: hidden;
+}
+
+/* Desktop */
+.desktop {
+  flex: 1;
+  width: 100%;
+  position: relative;
+  background-color: #008080; /* Classic Windows 95/98 teal background */
+  overflow: hidden;
+}
+
+/* Desktop Icons */
+.desktopIcons {
+  padding: 10px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, 70px);
+  grid-gap: 10px;
+  justify-content: start;
+  align-content: start;
+}
+
+.desktopIcon {
+  width: 70px;
+  height: 80px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: pointer;
+  user-select: none;
+  padding: 2px;
+}
+
+.desktopIcon:hover {
+  background-color: rgba(173, 216, 230, 0.3);
+}
+
+.iconImage {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 5px;
+}
+
+.iconImage img {
+  width: 32px;
+  height: 32px;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+
+.iconText {
+  font-size: 11px;
+  text-align: center;
+  color: #ffffff;
+  text-shadow: 1px 1px 1px #000000;
+  width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+/* Window styles */
+.window {
+  position: absolute;
+  border: 2px solid #c0c0c0;
+  border-top: 1px solid #dfdfdf;
+  border-left: 1px solid #dfdfdf;
+  border-right: 2px solid #7b7b7b;
+  border-bottom: 2px solid #7b7b7b;
+  background-color: #c0c0c0;
+  box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.activeWindow {
+  border-top-color: #dfdfdf;
+  border-left-color: #dfdfdf;
+  border-right-color: #404040;
+  border-bottom-color: #404040;
+  box-shadow: 3px 3px 10px rgba(0, 0, 0, 0.3);
+}
+
+.windowTitleBar {
+  background: linear-gradient(to right, #000080, #1084d0);
+  height: 22px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 5px;
+  cursor: move;
+}
+
+.activeWindow .windowTitleBar {
+  background: linear-gradient(to right, #000080, #1084d0);
+}
+
+.window:not(.activeWindow) .windowTitleBar {
+  background: linear-gradient(to right, #7b7b7b, #a0a0a0);
+}
+
+.windowTitle {
+  color: white;
+  font-size: 12px;
+  font-weight: bold;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.windowControls {
+  display: flex;
+  gap: 2px;
+}
+
+.windowControls button {
+  background-color: #c0c0c0;
+  border-top: 1px solid #fff;
+  border-left: 1px solid #fff;
+  border-right: 1px solid #7b7b7b;
+  border-bottom: 1px solid #7b7b7b;
+  width: 16px;
+  height: 14px;
+  font-size: 9px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+}
+
+.windowControls button:active {
+  border-top: 1px solid #7b7b7b;
+  border-left: 1px solid #7b7b7b;
+  border-right: 1px solid #fff;
+  border-bottom: 1px solid #fff;
+}
+
+.windowMinimize, .windowMaximize {
+  font-weight: bold;
+}
+
+.windowClose {
+  font-size: 8px;
+}
+
+.windowContent {
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+}
+
+.resizeHandle {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 16px;
+  height: 16px;
+  cursor: nwse-resize;
+  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"><path d="M16 0 L0 16 Z M16 5 L5 16 Z M16 10 L10 16 Z" stroke="%23000" stroke-width="1" /></svg>');
+  background-repeat: no-repeat;
+  z-index: 100;
+}
+
+/* Taskbar */
+.taskbar {
+  height: 28px;
+  width: 100%;
+  background-color: #c0c0c0;
+  border-top: 1px solid #ffffff;
+  display: flex;
+  align-items: center;
+  position: relative;
+  z-index: 1000;
+  box-shadow: 0 -1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.madeByTag {
+  padding: 0 10px;
+  margin-left: 2px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  font-size: 11px;
+  font-weight: bold;
+  color: #000;
+  background-color: #c0c0c0;
+  border-top: 1px solid #7b7b7b;
+  border-left: 1px solid #7b7b7b;
+  border-right: 1px solid #ffffff;
+  border-bottom: 1px solid #ffffff;
+}
+
+.runningApps {
+  display: flex;
+  flex: 1;
+  height: 100%;
+  padding: 2px;
+  gap: 2px;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+.taskbarButton {
+  height: 22px;
+  min-width: 120px;
+  max-width: 160px;
+  background-color: #c0c0c0;
+  border-top: 1px solid #ffffff;
+  border-left: 1px solid #ffffff;
+  border-right: 1px solid #7b7b7b;
+  border-bottom: 1px solid #7b7b7b;
+  padding: 0 5px;
+  display: flex;
+  align-items: center;
+  font-size: 11px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+}
+
+.activeTaskbarButton {
+  border-top: 1px solid #7b7b7b;
+  border-left: 1px solid #7b7b7b;
+  border-right: 1px solid #ffffff;
+  border-bottom: 1px solid #ffffff;
+  background-color: #bdbdbd;
+}
+
+.minimizedTaskbarButton {
+  background-color: #d0d0d0;
+  border-top: 1px solid #ffffff;
+  border-left: 1px solid #ffffff;
+  border-right: 1px solid #7b7b7b;
+  border-bottom: 1px solid #7b7b7b;
+}
+
+.minimizedTaskbarButton:hover {
+  background-color: #e0e0e0;
+}
+
+.taskbarRight {
+  display: flex;
+  align-items: center;
+  height: 100%;
+  padding: 0 5px;
+}
+
+.taskbarClock {
+  background-color: #c0c0c0;
+  border-top: 1px solid #7b7b7b;
+  border-left: 1px solid #7b7b7b;
+  border-right: 1px solid #ffffff;
+  border-bottom: 1px solid #ffffff;
+  height: 22px;
+  padding: 0 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  min-width: 75px;
+}
+
+/* Marquee-like selection styles */
+.selectionMarquee {
+  position: absolute;
+  border: 1px dashed #000;
+  background-color: rgba(0, 0, 0, 0.1);
+  pointer-events: none;
+  z-index: 1000;
+}
+
+/* Ensure proper focus states on elements */
+.appContainer :global(*) {
+  box-sizing: border-box;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .desktopIcons {
+    grid-template-columns: repeat(auto-fill, 60px);
+  }
+  
+  .iconText {
+    font-size: 10px;
+  }
+  
+  .taskbarButton {
+    min-width: 80px;
+  }
+}
