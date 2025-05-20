@@ -15,11 +15,13 @@ export default function Home() {
   // State for tracking the currently active window
   const [activeWindowId, setActiveWindowId] = useState(null);
   
-  // Desktop icons configuration
-  const desktopIcons = [
-    { id: 'mspaint', name: 'MS Paint', icon: '/icons/mspaint.png' },
-    { id: 'notes', name: 'Notes', icon: '/icons/notes.png' },
-  ];
+  // State for desktop background color
+  const [desktopColor, setDesktopColor] = useState('#008080'); // Classic teal as default
+  const [previewColor, setPreviewColor] = useState('#008080'); // For preview before applying
+  const [showColorPicker, setShowColorPicker] = useState(false);
+  
+  // Desktop icons configuration with built-in SVG fallbacks
+  const desktopIcons = [ { id: 'mspaint', name: 'MS Paint', icon: '/icons/mspaint.png' }, { id: 'notes', name: 'Notes', icon: '/icons/notes.png' }, ];
   
   // Handle window open
   const openWindow = (windowType) => {
@@ -224,6 +226,29 @@ export default function Home() {
     document.addEventListener('mouseup', handleMouseUp);
   };
   
+  // Color picker functions
+  const handleColorChange = (color) => {
+    // Just update the preview color - don't close the picker
+    setPreviewColor(color);
+  };
+
+  const applyColorChange = () => {
+    // Apply the previewed color to the actual desktop
+    setDesktopColor(previewColor);
+    setShowColorPicker(false);
+  };
+
+  const cancelColorChange = () => {
+    // Reset the preview color to the current desktop color
+    setPreviewColor(desktopColor);
+    setShowColorPicker(false);
+  };
+
+  const openColorPicker = () => {
+    setPreviewColor(desktopColor); // Start with current color
+    setShowColorPicker(true);
+  };
+  
   // Get the current time for the taskbar clock
   const [currentTime, setCurrentTime] = useState('');
   
@@ -244,6 +269,27 @@ export default function Home() {
     return () => clearInterval(intervalId);
   }, []);
   
+  // Click outside handler for color picker
+  useEffect(() => {
+    if (!showColorPicker) return;
+    
+    const handleClickOutside = (event) => {
+      if (
+        event.target.closest(`.${styles.colorPickerPopup}`) === null &&
+        event.target.closest(`.${styles.colorPickerButton}`) === null
+      ) {
+        // Cancel color change when clicking outside (reset to original)
+        cancelColorChange();
+      }
+    };
+    
+    document.addEventListener('mousedown', handleClickOutside);
+    
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showColorPicker, styles.colorPickerPopup, styles.colorPickerButton]);
+  
   // For double click handling on desktop icons
   const handleIconDoubleClick = (iconId) => {
     openWindow(iconId);
@@ -258,7 +304,9 @@ export default function Home() {
       </Head>
       
       {/* Desktop */}
-      <div className={styles.desktop}>
+      <div className={styles.desktop} style={{ 
+        backgroundColor: showColorPicker ? previewColor : desktopColor 
+      }}>
         {/* Desktop Icons */}
         <div className={styles.desktopIcons}>
           {desktopIcons.map((icon) => (
@@ -268,7 +316,15 @@ export default function Home() {
               onDoubleClick={() => handleIconDoubleClick(icon.id)}
             >
               <div className={styles.iconImage}>
-                <img src={icon.icon} alt={icon.name} />
+                <img 
+                  src={icon.icon} 
+                  alt={icon.name} 
+                  style={{ 
+                    width: '32px', 
+                    height: '32px',
+                    objectFit: 'contain' // Ensures image fits within dimensions
+                  }} 
+                />
               </div>
               <div className={styles.iconText}>{icon.name}</div>
             </div>
@@ -303,7 +359,10 @@ export default function Home() {
                   <button className={styles.windowMaximize}>□</button>
                   <button 
                     className={styles.windowClose}
-                    onClick={() => closeWindow(window.id)}
+                    onClick={(e) => {
+                      e.stopPropagation(); // Stop event propagation
+                      closeWindow(window.id);
+                    }}
                   >✕</button>
                 </div>
               </div>
@@ -355,6 +414,74 @@ export default function Home() {
         </div>
         
         <div className={styles.taskbarRight}>
+          {/* Color picker button */}
+          <div className={styles.colorPickerButton}
+            onClick={openColorPicker}
+            title="Change desktop color">
+            <div className={styles.colorIndicator} style={{ backgroundColor: desktopColor }}>
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M1 1H11V11H1V1Z" stroke="#000" strokeWidth="1" fill="none"/>
+                <path d="M1 1L11 11M1 11L11 1" stroke="#000" strokeWidth="0.8" fill="none"/>
+              </svg>
+            </div>
+          </div>
+          
+          {/* Color picker popup */}
+          {showColorPicker && (
+            <div className={styles.colorPickerPopup}>
+              <div className={styles.colorPickerTitle}>Desktop Colors</div>
+              <div className={styles.colorOptions}>
+                <div className={styles.colorOption} 
+                  style={{ backgroundColor: '#008080' }} 
+                  onClick={() => handleColorChange('#008080')}
+                  title="Classic Teal"></div>
+                <div className={styles.colorOption} 
+                  style={{ backgroundColor: '#000080' }} 
+                  onClick={() => handleColorChange('#000080')}
+                  title="Navy"></div>
+                <div className={styles.colorOption} 
+                  style={{ backgroundColor: '#008000' }} 
+                  onClick={() => handleColorChange('#008000')}
+                  title="Green"></div>
+                <div className={styles.colorOption} 
+                  style={{ backgroundColor: '#800080' }} 
+                  onClick={() => handleColorChange('#800080')}
+                  title="Purple"></div>
+                <div className={styles.colorOption} 
+                  style={{ backgroundColor: '#c0c0c0' }} 
+                  onClick={() => handleColorChange('#c0c0c0')}
+                  title="Silver"></div>
+                <div className={styles.colorOption} 
+                  style={{ backgroundColor: '#000000' }} 
+                  onClick={() => handleColorChange('#000000')}
+                  title="Black"></div>
+                <div className={styles.colorOption} 
+                  style={{ backgroundColor: '#808080' }} 
+                  onClick={() => handleColorChange('#808080')}
+                  title="Gray"></div>
+                <div className={styles.colorOption} 
+                  style={{ backgroundColor: '#0000ff' }} 
+                  onClick={() => handleColorChange('#0000ff')}
+                  title="Blue"></div>
+              </div>
+              <div className={styles.customColorSection}>
+                <input 
+                  type="color" 
+                  value={previewColor}
+                  onChange={(e) => handleColorChange(e.target.value)}
+                  className={styles.customColorPicker}
+                />
+                <span>Custom</span>
+              </div>
+              
+              {/* Add buttons to confirm or cancel */}
+              <div className={styles.colorPickerButtons}>
+                <button onClick={cancelColorChange}>Cancel</button>
+                <button onClick={applyColorChange}>OK</button>
+              </div>
+            </div>
+          )}
+          
           <div className={styles.taskbarClock}>{currentTime}</div>
         </div>
       </div>

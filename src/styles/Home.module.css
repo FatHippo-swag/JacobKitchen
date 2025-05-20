@@ -310,3 +310,132 @@
     min-width: 80px;
   }
 }
+/* Color picker button in taskbar */
+.taskbarRight {
+  display: flex;
+  align-items: center;
+  height: 100%;
+  padding: 0 5px;
+  gap: 5px; /* Add gap between elements */
+  position: relative; /* For popup positioning */
+}
+
+.colorPickerButton {
+  background-color: #c0c0c0;
+  border-top: 1px solid #ffffff;
+  border-left: 1px solid #ffffff;
+  border-right: 1px solid #7b7b7b;
+  border-bottom: 1px solid #7b7b7b;
+  height: 22px;
+  width: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 2px;
+}
+
+.colorPickerButton:active {
+  border-top: 1px solid #7b7b7b;
+  border-left: 1px solid #7b7b7b;
+  border-right: 1px solid #ffffff;
+  border-bottom: 1px solid #ffffff;
+}
+
+.colorIndicator {
+  width: 16px;
+  height: 16px;
+  border: 1px solid #000000;
+}
+
+/* Color picker popup */
+.colorPickerPopup {
+  position: absolute;
+  right: 5px;
+  bottom: 28px;
+  width: 190px;
+  background-color: #c0c0c0;
+  border-top: 1px solid #ffffff;
+  border-left: 1px solid #ffffff;
+  border-right: 2px solid #404040;
+  border-bottom: 2px solid #404040;
+  box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3);
+  padding: 4px;
+  z-index: 2000;
+}
+
+.colorPickerTitle {
+  background: linear-gradient(to right, #000080, #1084d0);
+  color: white;
+  font-size: 12px;
+  font-weight: bold;
+  padding: 2px 4px;
+  margin-bottom: 6px;
+}
+
+.colorOptions {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 4px;
+  margin-bottom: 8px;
+}
+
+.colorOption {
+  width: 36px;
+  height: 24px;
+  border: 1px solid #000000;
+  cursor: pointer;
+}
+
+.colorOption:hover {
+  outline: 2px solid #ffffff;
+}
+
+.customColorSection {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+  border-top: 1px solid #7b7b7b;
+  padding-top: 4px;
+  font-size: 11px;
+}
+
+.customColorPicker {
+  width: 24px;
+  height: 24px;
+  border: 1px solid #000000;
+  background: none;
+  padding: 0;
+  cursor: pointer;
+}
+.colorPickerButtons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+  margin-top: 8px;
+  border-top: 1px solid #7b7b7b;
+  padding-top: 8px;
+}
+
+.colorPickerButtons button {
+  font-family: 'MS Sans Serif', sans-serif;
+  font-size: 11px;
+  background-color: #c0c0c0;
+  border-top: 1px solid #ffffff;
+  border-left: 1px solid #ffffff;
+  border-right: 1px solid #7b7b7b;
+  border-bottom: 1px solid #7b7b7b;
+  padding: 2px 8px;
+  min-width: 60px;
+  height: 22px;
+  cursor: pointer;
+}
+
+.colorPickerButtons button:active {
+  border-top: 1px solid #7b7b7b;
+  border-left: 1px solid #7b7b7b;
+  border-right: 1px solid #ffffff;
+  border-bottom: 1px solid #ffffff;
+  background-color: #bdbdbd;
+}

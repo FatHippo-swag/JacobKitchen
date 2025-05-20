@@ -1,4 +1,27 @@
 /* Global styles */
+html, body, * {
+  cursor: url('/cursors/arrow.cur'), auto !important;
+}
+
+/* Then modify the win98-cursor class to make it more specific */
+.win98-cursor {
+  cursor: url('/cursors/arrow.cur'), auto !important;
+}
+
+/* And add a special rule for interactive elements */
+button, a, input, select, textarea, .clickable {
+  cursor: url('/cursors/arrow.cur'), pointer !important;
+}
+
+/* Override for paint app-specific cursors to ensure they still work */
+.pencilCursor {
+  cursor: url('/cursors/pencil.cur'), crosshair !important;
+}
+
+.eraserCursor {
+  cursor: url('/cursors/eraser.cur'), crosshair !important;
+}
+
 html, body {
   padding: 0;
   margin: 0;
