@@ -1,7 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import styles from '../styles/PaintApp.module.css';
-import { database } from '../firebase';
-import { ref, onValue, set } from "firebase/database";
 
 export default function PaintApp({ windowId }) {
   const canvasRef = useRef(null);
@@ -19,94 +17,11 @@ export default function PaintApp({ windowId }) {
   const [originalCanvasSize, setOriginalCanvasSize] = useState({ width: 0, height: 0 });
   const [originalImageData, setOriginalImageData] = useState(null);
   
-  // Refs for Firebase synchronization
-  const isDrawingRef = useRef(false); // Ref to access in callbacks
-  const isLoadingFromFirebase = useRef(false);
+  // Refs for local state management
+  const isDrawingRef = useRef(false);
   const debounceTimerRef = useRef(null);
 
-  // Save canvas state to Firebase with debouncing
-  const saveCanvasToFirebase = useCallback(() => {
-    if (canvasRef.current && windowId && !isLoadingFromFirebase.current) {
-      try {
-        // Clear any pending debounce timer
-        if (debounceTimerRef.current) {
-          clearTimeout(debounceTimerRef.current);
-        }
-        
-        // Set a new debounce timer to avoid too many writes to Firebase
-        debounceTimerRef.current = setTimeout(() => {
-          const dataURL = canvasRef.current.toDataURL('image/png');
-          set(ref(database, `paintings/${windowId}`), dataURL);
-          console.log('Canvas saved to Firebase');
-        }, 300); // 300ms debounce
-      } catch (e) {
-        console.error("Error saving canvas to Firebase:", e);
-      }
-    }
-  }, [windowId]);
-
-  // Load canvas from Firebase
-  useEffect(() => {
-    if (windowId) {
-      const paintingRef = ref(database, `paintings/${windowId}`);
-      
-      const unsubscribe = onValue(paintingRef, (snapshot) => {
-        const dataURL = snapshot.val();
-        
-        if (dataURL && canvasRef.current && !isDrawingRef.current) {
-          isLoadingFromFirebase.current = true;
-          
-          const context = canvasRef.current.getContext('2d');
-          const image = new Image();
-          
-          image.onload = () => {
-            // Clear the canvas
-            context.fillStyle = '#ffffff';
-            context.fillRect(0, 0, canvasRef.current.width, canvasRef.current.height);
-            
-            // Draw the image
-            context.drawImage(image, 0, 0, canvasRef.current.width, canvasRef.current.height);
-            
-            // Update undo stack
-            try {
-              const tempCanvas = document.createElement('canvas');
-              tempCanvas.width = canvasRef.current.width;
-              tempCanvas.height = canvasRef.current.height;
-              const tempContext = tempCanvas.getContext('2d');
-              tempContext.drawImage(canvasRef.current, 0, 0);
-              
-              setUndoStack(prev => {
-                // Only add to stack if it's different from the last one
-                if (prev.length === 0) {
-                  return [tempCanvas];
-                }
-                return prev;
-              });
-            } catch (e) {
-              console.error("Error updating undo stack:", e);
-            }
-            
-            isLoadingFromFirebase.current = false;
-          };
-          
-          image.src = dataURL;
-        }
-      });
-      
-      return () => unsubscribe();
-    }
-  }, [windowId]);
-
-  // Save canvas after drawing operations
-  useEffect(() => {
-    if (isDrawing === false && isDrawingRef.current === true) {
-      // Drawing just stopped, save to Firebase
-      saveCanvasToFirebase();
-    }
-    isDrawingRef.current = isDrawing;
-  }, [isDrawing, saveCanvasToFirebase]);
-
-  // Save the canvas state for undo functionality
+  // Save canvas state for undo functionality
   const saveCanvasState = useCallback(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -163,22 +78,16 @@ export default function PaintApp({ windowId }) {
         // Draw the previous state
         context.drawImage(prevCanvas, 0, 0, canvas.width, canvas.height);
         console.log('Undo successful. Remaining states:', newStack.length);
-        
-        // Save the updated canvas to Firebase
-        saveCanvasToFirebase();
       } else {
         // If no previous state, clear the canvas
         context.fillStyle = '#ffffff';
         context.fillRect(0, 0, canvas.width, canvas.height);
         console.log('Canvas cleared (no previous states)');
-        
-        // Save the cleared canvas to Firebase
-        saveCanvasToFirebase();
       }
     } catch (e) {
       console.error("Error during undo:", e);
     }
-  }, [undoStack, saveCanvasToFirebase]);
+  }, [undoStack]);
 
   // Set up keyboard shortcuts with improved event handling
   useEffect(() => {
@@ -358,6 +267,7 @@ export default function PaintApp({ windowId }) {
     const context = canvas.getContext('2d');
     
     setIsDrawing(true);
+    isDrawingRef.current = true;
     setPrevPos({ x: offsetX, y: offsetY });
     
     // For dot when clicking
@@ -410,7 +320,7 @@ export default function PaintApp({ windowId }) {
   const stopDrawing = (e) => {
     if (e) e.stopPropagation(); // Prevent window events from interfering
     setIsDrawing(false);
-    // The useEffect will detect this change and save to Firebase
+    isDrawingRef.current = false;
   };
 
   // Helper function to get coordinates for both mouse and touch events
@@ -443,9 +353,6 @@ export default function PaintApp({ windowId }) {
     const context = canvas.getContext('2d');
     context.fillStyle = '#ffffff';
     context.fillRect(0, 0, canvas.width, canvas.height);
-    
-    // Save the cleared canvas to Firebase
-    saveCanvasToFirebase();
   };
 
   return (

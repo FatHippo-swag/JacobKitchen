@@ -1,21 +1,544 @@
+/* Enhanced Notes App CSS with Windows 98 styling */
+@import url('https://fonts.cdnfonts.com/css/ms-sans-serif');
+
 .notesContainer {
   width: 100%;
   height: 100%;
-  padding: 2px;
+  display: flex;
+  flex-direction: column;
+  background-color: #c0c0c0;
+  font-family: 'MS Sans Serif', sans-serif;
+  font-size: 11px;
+}
+
+/* Toolbar styles */
+.toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 4px 8px;
+  background-color: #c0c0c0;
+  border-bottom: 1px solid #7b7b7b;
+  height: 32px;
+  flex-shrink: 0;
+}
+
+.toolSection {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.toolButton {
+  font-family: 'MS Sans Serif', sans-serif;
+  background-color: #c0c0c0;
+  border-top: 1px solid #ffffff;
+  border-left: 1px solid #ffffff;
+  border-right: 1px solid #7b7b7b;
+  border-bottom: 1px solid #7b7b7b;
+  padding: 2px 8px;
+  font-size: 11px;
+  cursor: pointer;
+  height: 22px;
+  min-width: 50px;
+}
+
+.toolButton:disabled {
+  color: #7b7b7b;
+  cursor: default;
+}
+
+.toolButton:active:not(:disabled) {
+  border-top: 1px solid #7b7b7b;
+  border-left: 1px solid #7b7b7b;
+  border-right: 1px solid #ffffff;
+  border-bottom: 1px solid #ffffff;
+  background-color: #bdbdbd;
+}
+
+.separator {
+  width: 1px;
+  height: 18px;
+  background-color: #7b7b7b;
+  margin: 0 4px;
+}
+
+.categorySelect, .searchInput {
+  font-family: 'MS Sans Serif', sans-serif;
+  font-size: 11px;
+  background-color: #ffffff;
+  border-top: 1px solid #7b7b7b;
+  border-left: 1px solid #7b7b7b;
+  border-right: 1px solid #ffffff;
+  border-bottom: 1px solid #ffffff;
+  padding: 2px 4px;
+  height: 22px;
+}
+
+.categorySelect {
+  min-width: 100px;
+}
+
+.searchSection {
+  display: flex;
+  align-items: center;
+}
+
+.searchInput {
+  width: 150px;
+}
+
+/* Main content area */
+.mainContent {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* Notes list */
+.notesList {
+  width: 250px;
+  border-right: 1px solid #7b7b7b;
+  display: flex;
+  flex-direction: column;
   background-color: #ffffff;
 }
 
-.notesTextarea {
-  width: 100%;
-  height: 100%;
-  resize: none;
-  border: none;
-  padding: 4px;
+.notesListHeader {
+  background-color: #c0c0c0;
+  padding: 4px 8px;
+  font-weight: bold;
+  border-bottom: 1px solid #7b7b7b;
+  font-size: 11px;
+}
+
+.notesListContent {
+  flex: 1;
+  overflow-y: auto;
+  background-color: #ffffff;
+}
+
+.noteItem {
+  padding: 8px;
+  border-bottom: 1px solid #e0e0e0;
+  cursor: pointer;
+  background-color: #ffffff;
+}
+
+.noteItem:hover {
+  background-color: #f0f0f0;
+}
+
+.selectedNote {
+  background-color: #000080 !important;
+  color: #ffffff;
+}
+
+.selectedNote:hover {
+  background-color: #000080 !important;
+}
+
+.noteItemHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+.noteTitle {
+  font-weight: bold;
+  font-size: 11px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+}
+
+.noteCategory {
+  font-size: 9px;
+  background-color: #e0e0e0;
+  padding: 1px 4px;
+  border-radius: 2px;
+  margin-left: 4px;
+}
+
+.selectedNote .noteCategory {
+  background-color: #4080ff;
+  color: #ffffff;
+}
+
+.notePreview {
+  font-size: 10px;
+  color: #666666;
+  margin-bottom: 4px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.selectedNote .notePreview {
+  color: #cccccc;
+}
+
+.noteDate {
+  font-size: 9px;
+  color: #999999;
+}
+
+.selectedNote .noteDate {
+  color: #cccccc;
+}
+
+.completedTask {
+  color: #008000;
+}
+
+.pendingTask {
+  color: #ff8000;
+}
+
+.emptyState {
+  padding: 20px;
+  text-align: center;
+  color: #666666;
+  font-style: italic;
+}
+
+/* Note editor */
+.noteEditor {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background-color: #ffffff;
+}
+
+.noteHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px;
+  background-color: #f0f0f0;
+  border-bottom: 1px solid #d0d0d0;
+}
+
+.noteTitleInput {
   font-family: 'MS Sans Serif', sans-serif;
   font-size: 12px;
-  line-height: 1.5;
-  outline: none;
-  color: #000;
+  font-weight: bold;
   background-color: #ffffff;
-  overflow: auto;
+  border-top: 1px solid #7b7b7b;
+  border-left: 1px solid #7b7b7b;
+  border-right: 1px solid #ffffff;
+  border-bottom: 1px solid #ffffff;
+  padding: 4px;
+  flex: 1;
+  margin-right: 8px;
+}
+
+.noteControls {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.noteCategorySelect, .noteTypeSelect {
+  font-family: 'MS Sans Serif', sans-serif;
+  font-size: 11px;
+  background-color: #ffffff;
+  border-top: 1px solid #7b7b7b;
+  border-left: 1px solid #7b7b7b;
+  border-right: 1px solid #ffffff;
+  border-bottom: 1px solid #ffffff;
+  padding: 2px 4px;
+  height: 22px;
+}
+
+.taskToggle {
+  font-family: 'MS Sans Serif', sans-serif;
+  background-color: #c0c0c0;
+  border-top: 1px solid #ffffff;
+  border-left: 1px solid #ffffff;
+  border-right: 1px solid #7b7b7b;
+  border-bottom: 1px solid #7b7b7b;
+  padding: 2px 8px;
+  font-size: 11px;
+  cursor: pointer;
+  height: 22px;
+}
+
+.taskToggle.completed {
+  background-color: #d0ffd0;
+  color: #008000;
+}
+
+.taskToggle:active {
+  border-top: 1px solid #7b7b7b;
+  border-left: 1px solid #7b7b7b;
+  border-right: 1px solid #ffffff;
+  border-bottom: 1px solid #ffffff;
+  background-color: #bdbdbd;
+}
+
+/* Formatting toolbar */
+.formattingToolbar {
+  display: flex;
+  align-items: center;
+  padding: 4px 8px;
+  background-color: #e0e0e0;
+  border-bottom: 1px solid #c0c0c0;
+  gap: 2px;
+}
+
+.formatButton {
+  font-family: 'MS Sans Serif', sans-serif;
+  background-color: #c0c0c0;
+  border-top: 1px solid #ffffff;
+  border-left: 1px solid #ffffff;
+  border-right: 1px solid #7b7b7b;
+  border-bottom: 1px solid #7b7b7b;
+  padding: 2px 6px;
+  font-size: 11px;
+  cursor: pointer;
+  height: 22px;
+  min-width: 24px;
+  font-weight: bold;
+}
+
+.formatButton:active {
+  border-top: 1px solid #7b7b7b;
+  border-left: 1px solid #7b7b7b;
+  border-right: 1px solid #ffffff;
+  border-bottom: 1px solid #ffffff;
+  background-color: #bdbdbd;
+}
+
+/* Note content */
+.noteContent {
+  flex: 1;
+  font-family: 'MS Sans Serif', sans-serif;
+  font-size: 12px;
+  background-color: #ffffff;
+  border: none;
+  padding: 8px;
+  resize: none;
+  outline: none;
+  line-height: 1.4;
+}
+
+/* Status bar */
+.statusBar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 2px 8px;
+  background-color: #c0c0c0;
+  border-top: 1px solid #7b7b7b;
+  font-size: 10px;
+  height: 20px;
+  flex-shrink: 0;
+}
+
+/* No note selected state */
+.noNoteSelected {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #f8f8f8;
+}
+
+.noNoteMessage {
+  text-align: center;
+  color: #666666;
+}
+
+.noNoteMessage h3 {
+  font-size: 14px;
+  margin-bottom: 8px;
+  color: #333333;
+}
+
+.noNoteMessage p {
+  font-size: 11px;
+  margin-bottom: 12px;
+}
+
+.createFirstNote {
+  font-family: 'MS Sans Serif', sans-serif;
+  background-color: #c0c0c0;
+  border-top: 1px solid #ffffff;
+  border-left: 1px solid #ffffff;
+  border-right: 1px solid #7b7b7b;
+  border-bottom: 1px solid #7b7b7b;
+  padding: 4px 12px;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.createFirstNote:active {
+  border-top: 1px solid #7b7b7b;
+  border-left: 1px solid #7b7b7b;
+  border-right: 1px solid #ffffff;
+  border-bottom: 1px solid #ffffff;
+  background-color: #bdbdbd;
+}
+
+/* Dialog styles */
+.dialogOverlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.dialog {
+  background-color: #c0c0c0;
+  border-top: 1px solid #ffffff;
+  border-left: 1px solid #ffffff;
+  border-right: 2px solid #7b7b7b;
+  border-bottom: 2px solid #7b7b7b;
+  box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3);
+  min-width: 300px;
+}
+
+.dialogHeader {
+  background: linear-gradient(to right, #000080, #1084d0);
+  color: white;
+  font-size: 12px;
+  font-weight: bold;
+  padding: 4px 8px;
+  border-bottom: 1px solid #7b7b7b;
+}
+
+.dialogContent {
+  padding: 12px;
+}
+
+.dialogInput {
+  font-family: 'MS Sans Serif', sans-serif;
+  font-size: 11px;
+  background-color: #ffffff;
+  border-top: 1px solid #7b7b7b;
+  border-left: 1px solid #7b7b7b;
+  border-right: 1px solid #ffffff;
+  border-bottom: 1px solid #ffffff;
+  padding: 4px;
+  width: 100%;
+}
+
+.dialogButtons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 8px 12px;
+  background-color: #c0c0c0;
+  border-top: 1px solid #7b7b7b;
+}
+
+.dialogButton {
+  font-family: 'MS Sans Serif', sans-serif;
+  background-color: #c0c0c0;
+  border-top: 1px solid #ffffff;
+  border-left: 1px solid #ffffff;
+  border-right: 1px solid #7b7b7b;
+  border-bottom: 1px solid #7b7b7b;
+  padding: 4px 12px;
+  font-size: 11px;
+  cursor: pointer;
+  min-width: 60px;
+}
+
+.dialogButton:disabled {
+  color: #7b7b7b;
+  cursor: default;
+}
+
+.dialogButton:active:not(:disabled) {
+  border-top: 1px solid #7b7b7b;
+  border-left: 1px solid #7b7b7b;
+  border-right: 1px solid #ffffff;
+  border-bottom: 1px solid #ffffff;
+  background-color: #bdbdbd;
+}
+
+/* Scrollbar styles for Windows 98 look */
+.notesListContent::-webkit-scrollbar,
+.noteContent::-webkit-scrollbar {
+  width: 16px;
+  height: 16px;
+}
+
+.notesListContent::-webkit-scrollbar-track,
+.noteContent::-webkit-scrollbar-track {
+  background: #c0c0c0;
+}
+
+.notesListContent::-webkit-scrollbar-thumb,
+.noteContent::-webkit-scrollbar-thumb {
+  background: #c0c0c0;
+  border-top: 1px solid #ffffff;
+  border-left: 1px solid #ffffff;
+  border-right: 1px solid #7b7b7b;
+  border-bottom: 1px solid #7b7b7b;
+}
+
+.notesListContent::-webkit-scrollbar-button,
+.noteContent::-webkit-scrollbar-button {
+  display: block;
+  background-color: #c0c0c0;
+  border-top: 1px solid #ffffff;
+  border-left: 1px solid #ffffff;
+  border-right: 1px solid #7b7b7b;
+  border-bottom: 1px solid #7b7b7b;
+  height: 16px;
+  width: 16px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .mainContent {
+    flex-direction: column;
+  }
+  
+  .notesList {
+    width: 100%;
+    height: 200px;
+    border-right: none;
+    border-bottom: 1px solid #7b7b7b;
+  }
+  
+  .toolbar {
+    flex-wrap: wrap;
+    height: auto;
+    min-height: 32px;
+  }
+  
+  .searchSection {
+    margin-top: 4px;
+  }
+  
+  .searchInput {
+    width: 120px;
+  }
+}
+
+/* Focus styles */
+.noteTitleInput:focus,
+.noteContent:focus,
+.searchInput:focus,
+.dialogInput:focus {
+  outline: 1px dotted #000000;
+  outline-offset: -2px;
+}
+
+/* Selection styles */
+.noteContent::selection {
+  background-color: #000080;
+  color: #ffffff;
 }

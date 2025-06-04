@@ -3,8 +3,6 @@ import Head from 'next/head';
 import styles from '../styles/Home.module.css';
 import PaintApp from '../components/PaintApp';
 import NotesApp from '../components/NotesApp';
-import { database } from '../firebase';
-import { ref, onValue, set, update, remove, get } from "firebase/database";
 
 export default function Home() {
   // State for tracking active windows
@@ -22,86 +20,6 @@ export default function Home() {
   
   // Desktop icons configuration with built-in SVG fallbacks
   const desktopIcons = [ { id: 'mspaint', name: 'MS Paint', icon: '/icons/mspaint.png' }, { id: 'notes', name: 'Notes', icon: '/icons/notes.png' }, ];
-  // Load desktop color from Firebase
-  useEffect(() => {
-    const desktopColorRef = ref(database, 'settings/desktopColor');
-    
-    const unsubscribe = onValue(desktopColorRef, (snapshot) => {
-      const color = snapshot.val();
-      if (color) {
-        setDesktopColor(color);
-        setPreviewColor(color);
-      }
-    });
-    
-    return () => unsubscribe();
-  }, []);
-  
-  // Load windows from Firebase
-  useEffect(() => {
-    const windowsRef = ref(database, 'windows');
-    
-    const unsubscribe = onValue(windowsRef, (snapshot) => {
-      const windowsData = snapshot.val();
-      if (windowsData) {
-        // Convert from object to array if needed
-        const windowsArray = Array.isArray(windowsData) 
-          ? windowsData 
-          : Object.values(windowsData);
-        
-        setWindows(windowsArray);
-      }
-    });
-    
-    return () => unsubscribe();
-  }, []);
-  
-  // Load minimized windows from Firebase
-  useEffect(() => {
-    const minimizedRef = ref(database, 'minimizedWindows');
-    
-    const unsubscribe = onValue(minimizedRef, (snapshot) => {
-      const minimizedData = snapshot.val();
-      if (minimizedData) {
-        // Convert from object to array if needed
-        const minimizedArray = Array.isArray(minimizedData) 
-          ? minimizedData 
-          : Object.values(minimizedData);
-        
-        setMinimizedWindows(minimizedArray);
-      }
-    });
-    
-    return () => unsubscribe();
-  }, []);
-  
-  // Load window count from Firebase
-  useEffect(() => {
-    const countRef = ref(database, 'windowCount');
-    
-    const unsubscribe = onValue(countRef, (snapshot) => {
-      const count = snapshot.val();
-      if (count !== null && count !== undefined) {
-        setWindowCount(count);
-      }
-    });
-    
-    return () => unsubscribe();
-  }, []);
-  
-  // Load active window ID from Firebase
-  useEffect(() => {
-    const activeWindowRef = ref(database, 'activeWindowId');
-    
-    const unsubscribe = onValue(activeWindowRef, (snapshot) => {
-      const activeId = snapshot.val();
-      if (activeId) {
-        setActiveWindowId(activeId);
-      }
-    });
-    
-    return () => unsubscribe();
-  }, []);
   
   // Handle window open
   const openWindow = (windowType) => {
@@ -109,8 +27,8 @@ export default function Home() {
     const uniqueId = `${windowType}-${windowCount}`;
     const newCount = windowCount + 1;
     
-    // Update window count in Firebase
-    set(ref(database, 'windowCount'), newCount);
+    // Update window count
+    setWindowCount(newCount);
     
     // Create window config based on type
     let windowConfig = {
@@ -137,12 +55,12 @@ export default function Home() {
       windowConfig.size = { width: 400, height: 300 };
     }
     
-    // Add new window to Firebase
+    // Add new window to local state
     const newWindows = [...windows, windowConfig];
-    set(ref(database, 'windows'), newWindows);
+    setWindows(newWindows);
     
     // Set as active window
-    set(ref(database, 'activeWindowId'), uniqueId);
+    setActiveWindowId(uniqueId);
   };
   
   // Handle window minimize
@@ -151,13 +69,13 @@ export default function Home() {
     const windowToMinimize = windows.find(w => w.id === windowId);
     if (!windowToMinimize) return;
     
-    // Add to minimized windows in Firebase
+    // Add to minimized windows
     const newMinimized = [...minimizedWindows, windowToMinimize];
-    set(ref(database, 'minimizedWindows'), newMinimized);
+    setMinimizedWindows(newMinimized);
     
-    // Remove from active windows in Firebase
+    // Remove from active windows
     const newWindows = windows.filter(window => window.id !== windowId);
-    set(ref(database, 'windows'), newWindows);
+    setWindows(newWindows);
     
     // Set a new active window if needed
     if (activeWindowId === windowId) {
@@ -166,9 +84,9 @@ export default function Home() {
         const highestZWindow = remainingWindows.reduce((prev, current) => 
           (prev.zIndex > current.zIndex) ? prev : current
         );
-        set(ref(database, 'activeWindowId'), highestZWindow.id);
+        setActiveWindowId(highestZWindow.id);
       } else {
-        remove(ref(database, 'activeWindowId'));
+        setActiveWindowId(null);
       }
     }
   };
@@ -185,16 +103,16 @@ export default function Home() {
       zIndex: Math.max(...windows.map(w => w.zIndex || 0), 0) + 1
     };
     
-    // Add back to active windows in Firebase
+    // Add back to active windows
     const newWindows = [...windows, updatedWindow];
-    set(ref(database, 'windows'), newWindows);
+    setWindows(newWindows);
     
-    // Remove from minimized windows in Firebase
+    // Remove from minimized windows
     const newMinimized = minimizedWindows.filter(window => window.id !== windowId);
-    set(ref(database, 'minimizedWindows'), newMinimized);
+    setMinimizedWindows(newMinimized);
     
-    // Set as active window in Firebase
-    set(ref(database, 'activeWindowId'), windowId);
+    // Set as active window
+    setActiveWindowId(windowId);
   };
   
   // Handle window close
@@ -203,13 +121,13 @@ export default function Home() {
     const isMinimized = minimizedWindows.some(w => w.id === windowId);
     
     if (isMinimized) {
-      // Remove from minimized windows in Firebase
+      // Remove from minimized windows
       const newMinimized = minimizedWindows.filter(window => window.id !== windowId);
-      set(ref(database, 'minimizedWindows'), newMinimized);
+      setMinimizedWindows(newMinimized);
     } else {
-      // Remove from active windows in Firebase
+      // Remove from active windows
       const newWindows = windows.filter(window => window.id !== windowId);
-      set(ref(database, 'windows'), newWindows);
+      setWindows(newWindows);
       
       // Set the next highest zIndex window as active
       if (activeWindowId === windowId) {
@@ -218,9 +136,9 @@ export default function Home() {
           const highestZWindow = remainingWindows.reduce((prev, current) => 
             (prev.zIndex > current.zIndex) ? prev : current
           );
-          set(ref(database, 'activeWindowId'), highestZWindow.id);
+          setActiveWindowId(highestZWindow.id);
         } else {
-          remove(ref(database, 'activeWindowId'));
+          setActiveWindowId(null);
         }
       }
     }
@@ -228,7 +146,7 @@ export default function Home() {
   
   // Handle window focus
   const focusWindow = (windowId) => {
-    // Update z-index in Firebase
+    // Update z-index in local state
     const updatedWindows = windows.map(window => {
       if (window.id === windowId) {
         return { 
@@ -239,10 +157,10 @@ export default function Home() {
       return window;
     });
     
-    set(ref(database, 'windows'), updatedWindows);
+    setWindows(updatedWindows);
     
-    // Set as active window in Firebase
-    set(ref(database, 'activeWindowId'), windowId);
+    // Set as active window
+    setActiveWindowId(windowId);
   };
   
   // Handle window drag
@@ -285,25 +203,6 @@ export default function Home() {
     };
     
     const handleMouseUp = () => {
-      // When mouse up, save the final position to Firebase
-      const updatedWindows = windows.map(w => {
-        if (w.id === windowId) {
-          const dx = e.clientX - startX;
-          const dy = e.clientY - startY;
-          
-          return {
-            ...w,
-            position: {
-              x: startPosX + dx,
-              y: startPosY + dy
-            }
-          };
-        }
-        return w;
-      });
-      
-      set(ref(database, 'windows'), updatedWindows);
-      
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
     };
@@ -347,25 +246,6 @@ export default function Home() {
     };
     
     const handleMouseUp = () => {
-      // When mouse up, save the final size to Firebase
-      const updatedWindows = windows.map(w => {
-        if (w.id === windowId) {
-          const dx = e.clientX - startX;
-          const dy = e.clientY - startY;
-          
-          return {
-            ...w,
-            size: {
-              width: Math.max(300, startWidth + dx),
-              height: Math.max(200, startHeight + dy)
-            }
-          };
-        }
-        return w;
-      });
-      
-      set(ref(database, 'windows'), updatedWindows);
-      
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
     };
@@ -381,8 +261,8 @@ export default function Home() {
   };
 
   const applyColorChange = () => {
-    // Apply the previewed color to Firebase
-    set(ref(database, 'settings/desktopColor'), previewColor);
+    // Apply the previewed color
+    setDesktopColor(previewColor);
     setShowColorPicker(false);
   };
 
