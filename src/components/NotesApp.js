@@ -2,6 +2,14 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import styles from '../styles/NotesApp.module.css';
 
 export default function NotesApp({ windowId }) {
+  // Debug: Track component lifecycle
+  useEffect(() => {
+    console.log('🚀 NotesApp component MOUNTED with windowId:', windowId);
+    return () => {
+      console.log('💀 NotesApp component UNMOUNTED for windowId:', windowId);
+    };
+  }, [windowId]);
+
   // Enhanced state management - using local state with localStorage persistence
   const [notes, setNotes] = useState([]);
   const [currentNote, setCurrentNote] = useState(null);
@@ -21,19 +29,61 @@ export default function NotesApp({ windowId }) {
   // Dedicated save functions for immediate persistence
   const saveNotesToStorage = useCallback((notesToSave) => {
     try {
-      localStorage.setItem(`notes-${windowId}`, JSON.stringify(notesToSave));
-      console.log('Notes saved to localStorage:', notesToSave.length, 'notes');
+      // Validate the notes before saving
+      if (!Array.isArray(notesToSave)) {
+        console.error('❌ Attempted to save invalid notes data:', notesToSave);
+        return;
+      }
+      
+      const notesString = JSON.stringify(notesToSave);
+      const storageKey = `notes-${windowId}`;
+      
+      console.log('💾 SAVING NOTES');
+      console.log('📍 Storage key:', storageKey);
+      console.log('📝 Notes count:', notesToSave.length);
+      console.log('📝 Notes to save:', notesToSave.map(n => ({ id: n.id, title: n.title })));
+      
+      // Check localStorage quota
+      try {
+        localStorage.setItem(storageKey, notesString);
+      } catch (quotaError) {
+        if (quotaError.name === 'QuotaExceededError') {
+          console.error('❌ localStorage quota exceeded!');
+          alert('Storage quota exceeded! Your notes cannot be saved.');
+          return;
+        }
+        throw quotaError;
+      }
+      
+      console.log('✅ Notes saved to localStorage');
+      
+      // Verify the save worked by reading it back immediately
+      const verification = localStorage.getItem(storageKey);
+      if (verification !== notesString) {
+        console.error('❌ Save verification FAILED!');
+        console.error('Expected:', notesString);
+        console.error('Got:', verification);
+      } else {
+        console.log('✅ Save verification PASSED');
+      }
     } catch (e) {
-      console.error('Error saving notes to localStorage:', e);
+      console.error('❌ Error saving notes to localStorage:', e);
+      alert('Failed to save notes! Error: ' + e.message);
     }
   }, [windowId]);
 
   const saveCategoriesToStorage = useCallback((categoriesToSave) => {
     try {
-      localStorage.setItem(`categories-${windowId}`, JSON.stringify(categoriesToSave));
-      console.log('Categories saved to localStorage:', categoriesToSave);
+      if (!Array.isArray(categoriesToSave)) {
+        console.error('❌ Attempted to save invalid categories data:', categoriesToSave);
+        return;
+      }
+      
+      const storageKey = `categories-${windowId}`;
+      localStorage.setItem(storageKey, JSON.stringify(categoriesToSave));
+      console.log('✅ Categories saved to localStorage:', categoriesToSave);
     } catch (e) {
-      console.error('Error saving categories to localStorage:', e);
+      console.error('❌ Error saving categories to localStorage:', e);
     }
   }, [windowId]);
 
@@ -67,47 +117,81 @@ export default function NotesApp({ windowId }) {
     saveNotesToStorage(sampleNotes);
   }, [saveNotesToStorage]);
 
+  // Add state to track if we've loaded initial data
+  const [hasLoadedInitialData, setHasLoadedInitialData] = useState(false);
+  const [lastWindowId, setLastWindowId] = useState(windowId);
+
+  // Debug: Track windowId changes
+  useEffect(() => {
+    if (lastWindowId !== windowId) {
+      console.log('🔄 WindowId CHANGED from', lastWindowId, 'to', windowId);
+      setLastWindowId(windowId);
+      setHasLoadedInitialData(false); // Reset loading flag when windowId changes
+    }
+  }, [windowId, lastWindowId]);
+
   // Load notes from localStorage on component mount
   useEffect(() => {
+    if (hasLoadedInitialData) return; // Prevent multiple loads
+    
+    console.log('🔄 LOADING NOTES - Component mounted/windowId changed');
+    console.log('📍 WindowId:', windowId);
+    console.log('📍 Storage key for notes:', `notes-${windowId}`);
+    console.log('📍 Storage key for categories:', `categories-${windowId}`);
+    
+    // Debug: Show all localStorage keys
+    console.log('📍 All localStorage keys:', Object.keys(localStorage));
+    
     const savedNotes = localStorage.getItem(`notes-${windowId}`);
     const savedCategories = localStorage.getItem(`categories-${windowId}`);
     
-    if (savedNotes) {
-      try {
-        const parsedNotes = JSON.parse(savedNotes);
-        if (parsedNotes && parsedNotes.length > 0) {
-          setNotes(parsedNotes);
-          setCurrentNote(parsedNotes[0]);
-          console.log('Loaded notes from localStorage:', parsedNotes.length, 'notes');
-        } else {
-          initializeSampleData();
-        }
-      } catch (e) {
-        console.error('Error loading notes from localStorage:', e);
-        initializeSampleData();
-      }
-    } else {
-      // No saved notes, initialize with sample data
-      initializeSampleData();
-    }
+    console.log('📄 Raw saved notes:', savedNotes);
+    console.log('📄 Raw saved categories:', savedCategories);
     
-    if (savedCategories) {
+    // Load categories first
+    if (savedCategories && savedCategories !== 'null') {
       try {
         const parsedCategories = JSON.parse(savedCategories);
-        if (parsedCategories && parsedCategories.length > 0) {
+        if (Array.isArray(parsedCategories) && parsedCategories.length > 0) {
           setCategories(parsedCategories);
-          console.log('Loaded categories from localStorage:', parsedCategories);
+          console.log('✅ Loaded categories:', parsedCategories);
         }
       } catch (e) {
-        console.error('Error loading categories from localStorage:', e);
+        console.error('❌ Error loading categories:', e);
       }
     }
-  }, [windowId, initializeSampleData]);
+    
+    // Load notes
+    if (savedNotes && savedNotes !== 'null' && savedNotes !== '[]' && savedNotes !== '') {
+      try {
+        const parsedNotes = JSON.parse(savedNotes);
+        console.log('📝 Parsed notes:', parsedNotes);
+        
+        if (Array.isArray(parsedNotes) && parsedNotes.length > 0) {
+          console.log('✅ Loading', parsedNotes.length, 'notes from localStorage');
+          setNotes(parsedNotes);
+          setCurrentNote(parsedNotes[0]);
+          setHasLoadedInitialData(true);
+          console.log('✅ Notes loaded successfully');
+          return; // Exit early - don't initialize empty state
+        }
+      } catch (e) {
+        console.error('❌ Error parsing notes:', e);
+      }
+    }
+    
+    // Initialize empty state if no valid notes found
+    console.log('🆕 No valid saved notes found, starting with empty state');
+    initializeEmptyState();
+    setHasLoadedInitialData(true);
+  }, [windowId, hasLoadedInitialData, initializeEmptyState]);
 
   // Create new note with immediate save
   const createNewNote = () => {
+    console.log('Creating new note...');
+    
     const newNote = {
-      id: `note_${Date.now()}`,
+      id: `note_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`, // More unique ID
       title: 'New Note',
       content: '',
       category: selectedCategory,
@@ -117,76 +201,119 @@ export default function NotesApp({ windowId }) {
       updatedAt: Date.now()
     };
     
-    const updatedNotes = [...notes, newNote];
-    setNotes(updatedNotes);
+    console.log('New note created:', newNote);
+    
+    // Use functional state update to ensure we have the latest state
+    setNotes(prevNotes => {
+      const updatedNotes = [...prevNotes, newNote];
+      console.log('Updated notes array:', updatedNotes.map(n => ({ id: n.id, title: n.title })));
+      
+      // Save immediately
+      saveNotesToStorage(updatedNotes);
+      return updatedNotes;
+    });
+    
     setCurrentNote(newNote);
     setIsCreatingNote(false);
     
-    // Immediately save to localStorage
-    saveNotesToStorage(updatedNotes);
+    console.log('Note creation completed');
   };
 
   // Delete current note with immediate save
   const deleteCurrentNote = () => {
-    if (currentNote) {
-      const updatedNotes = notes.filter(note => note.id !== currentNote.id);
-      setNotes(updatedNotes);
-      setCurrentNote(updatedNotes.length > 0 ? updatedNotes[0] : null);
-      
-      // Immediately save to localStorage
-      saveNotesToStorage(updatedNotes);
+    if (!currentNote) {
+      console.log('No current note to delete');
+      return;
     }
+    
+    console.log('Deleting note:', currentNote.id, currentNote.title);
+    
+    // Use functional state update to ensure we have the latest state
+    setNotes(prevNotes => {
+      const updatedNotes = prevNotes.filter(note => note.id !== currentNote.id);
+      console.log('Notes after deletion:', updatedNotes.map(n => ({ id: n.id, title: n.title })));
+      
+      // Save immediately
+      saveNotesToStorage(updatedNotes);
+      return updatedNotes;
+    });
+    
+    // Set current note to the first available note or null
+    setCurrentNote(prevCurrentNote => {
+      const remainingNotes = notes.filter(note => note.id !== prevCurrentNote.id);
+      const newCurrentNote = remainingNotes.length > 0 ? remainingNotes[0] : null;
+      console.log('New current note:', newCurrentNote ? newCurrentNote.title : 'None');
+      return newCurrentNote;
+    });
+    
+    console.log('Note deletion completed');
   };
 
   // Handle text change with immediate save
   const handleTextChange = (field, value) => {
-    if (!currentNote) return;
+    if (!currentNote) {
+      console.log('No current note for text change');
+      return;
+    }
+    
+    console.log(`Updating ${field} for note ${currentNote.id}`);
     
     const updatedNote = { ...currentNote, [field]: value, updatedAt: Date.now() };
     setCurrentNote(updatedNote);
     
-    // Update the note in the notes array
-    const updatedNotes = notes.map(note => 
-      note.id === currentNote.id ? updatedNote : note
-    );
-    setNotes(updatedNotes);
+    // Use functional state update to ensure we have the latest state
+    setNotes(prevNotes => {
+      const updatedNotes = prevNotes.map(note => 
+        note.id === currentNote.id ? updatedNote : note
+      );
+      
+      // Save immediately for all changes
+      saveNotesToStorage(updatedNotes);
+      return updatedNotes;
+    });
     
-    // Clear any existing timeout to prevent multiple saves
+    // Clear any existing timeout to prevent multiple typing indicators
     if (typingTimeoutRef.current) {
       clearTimeout(typingTimeoutRef.current);
     }
     
-    // Debounce only the typing indicator, but save immediately for critical changes
+    // Debounce only the typing indicator, not the saving
     if (field === 'content') {
       setIsTyping(true);
       typingTimeoutRef.current = setTimeout(() => {
         setIsTyping(false);
       }, 500);
     }
-    
-    // Immediately save to localStorage for all changes
-    saveNotesToStorage(updatedNotes);
   };
 
   // Toggle task completion with immediate save
   const toggleTaskCompletion = () => {
-    if (currentNote) {
-      const updatedNote = { 
-        ...currentNote, 
-        completed: !currentNote.completed,
-        updatedAt: Date.now()
-      };
-      setCurrentNote(updatedNote);
-      
-      // Update the note in the notes array
-      const updatedNotes = notes.map(note => 
+    if (!currentNote) {
+      console.log('No current note for task toggle');
+      return;
+    }
+    
+    console.log(`Toggling completion for task ${currentNote.id}`);
+    
+    const updatedNote = { 
+      ...currentNote, 
+      completed: !currentNote.completed,
+      updatedAt: Date.now()
+    };
+    setCurrentNote(updatedNote);
+    
+    // Use functional state update to ensure we have the latest state
+    setNotes(prevNotes => {
+      const updatedNotes = prevNotes.map(note => 
         note.id === currentNote.id ? updatedNote : note
       );
-      setNotes(updatedNotes);
       
-      // Immediately save to localStorage
+      // Save immediately
       saveNotesToStorage(updatedNotes);
-    }
+      return updatedNotes;
+    });
+    
+    console.log('Task completion toggled and saved');
   };
 
   // Insert formatting
@@ -307,6 +434,21 @@ export default function NotesApp({ windowId }) {
             title="Add Category"
           >
             +Cat
+          </button>
+          <button 
+            className={styles.toolButton}
+            onClick={() => {
+              console.log('🔍 MANUAL DEBUG CHECK');
+              console.log('Current windowId:', windowId);
+              console.log('Current notes in state:', notes.map(n => ({ id: n.id, title: n.title })));
+              console.log('localStorage content for this window:', localStorage.getItem(`notes-${windowId}`));
+              console.log('All notes-related localStorage keys:', 
+                Object.keys(localStorage).filter(key => key.startsWith('notes-')));
+              saveNotesToStorage(notes);
+            }}
+            title="Debug & Force Save"
+          >
+            🔍
           </button>
         </div>
         
@@ -467,10 +609,12 @@ export default function NotesApp({ windowId }) {
                   {currentNote.type === 'task' ? 'Task' : 'Note'} | 
                   {currentNote.category} | 
                   Created: {formatDate(currentNote.createdAt)} | 
-                  Updated: {formatDate(currentNote.updatedAt)}
+                  Updated: {formatDate(currentNote.updatedAt)} |
+                  WindowId: {windowId}
                 </span>
                 <span>
-                  {currentNote.content.length} characters
+                  {currentNote.content.length} characters | 
+                  {notes.length} total notes
                 </span>
               </div>
             </>
