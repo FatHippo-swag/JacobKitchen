@@ -130,6 +130,14 @@ export default function NotesApp({ windowId }) {
     }
   }, [windowId, lastWindowId]);
 
+  // Initialize empty state function
+  const initializeEmptyState = useCallback(() => {
+    console.log('🆕 Initializing empty notes state');
+    setNotes([]);
+    setCurrentNote(null);
+    setCategories(['General', 'Tasks', 'Ideas', 'Work']);
+  }, []);
+
   // Load notes from localStorage on component mount
   useEffect(() => {
     if (hasLoadedInitialData) return; // Prevent multiple loads
